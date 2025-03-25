@@ -14,8 +14,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Configuración de la base de datos
 const pool = mysql.createPool({
   host: process.env.DB_HOST || '26.106.45.23',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
+  user: process.env.DB_USER || 'admin',
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || 'practicasmanzano',
   waitForConnections: true,
   connectionLimit: 10,
