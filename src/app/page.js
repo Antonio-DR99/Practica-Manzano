@@ -1,66 +1,88 @@
-"use client"; // Asegúrate de que esta línea esté en la parte superior
+'use client';
+import { useState, useEffect } from 'react';
+import { formatDate } from '@/lib/utils';
 
-import { useState } from "react";
+export default function Home() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-export default function LoginPage() {
-  const [error, setError] = useState("");
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('/api/orders');
+        const data = await response.json();
+        setOrders(data);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Función para manejar el submit del formulario
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+    fetchOrders();
+    // Actualizar los pedidos cada minuto
+    const interval = setInterval(fetchOrders, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
-    // Aquí puedes agregar tu lógica de autenticación con tu backend o API
-    const email = e.target.email.value;
-    const password = e.target.password.value;
-
-    // Para fines visuales, solo muestra un error si el campo está vacío
-    if (!email || !password) {
-      setError("Por favor ingresa ambos campos.");
-    } else {
-      // Lógica de autenticación aquí (si se implementa más adelante)
-      console.log("Autenticando...", { email, password });
-      setError(""); // Limpiar el error si todo está bien
-    }
-  };
+  if (loading) {
+    return (
+      <main className="min-h-screen p-4">
+        <div className="header">
+          <h1>Cargando pedidos...</h1>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-4 text-center text-black" >Iniciar Sesion</h1>
-        
-        {error && <p className="text-red-500 text-center">{error}</p>}
-        
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Formulario adaptado de tu HTML original */}
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            required
-            className="p-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 placeholder:text-black"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Contraseña"
-            required
-            className="p-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 placeholder:text-black"
-          />
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 cursor-pointer">
-            Ingresar
-          </button>
-        </form>
-
-        {/* Aquí podrías incluir otros enlaces si los necesitas */}
-        <div className="mt-4">
-          <p className="text-center text-sm text-gray-500">
-            <a href="/forgot-password" className="text-blue-500 hover:underline">¿Olvidaste tu contraseña?</a>
-          </p>
-          <p className="text-center text-sm text-gray-500">
-            <a href="/signup" className="text-blue-500 hover:underline">¿No tienes una cuenta? Regístrate</a>
-          </p>
-        </div>
+    <main className="min-h-screen">
+      <div className="header">
+        <h1>Pedidos de WhatsApp</h1>
       </div>
-    </div>
+      
+      <div className="orders-grid">
+        {orders.length === 0 ? (
+          <p className="text-center text-gray-500">No hay pedidos todavía</p>
+        ) : (
+          orders.map((order) => (
+            <div key={order.idorder} className="order-card">
+              <div className="flex justify-between items-start mb-2">
+                <h2 className="font-semibold">{order.user_name}</h2>
+                <span className="text-sm text-gray-500">
+                  {formatDate(order.orderdate)}
+                </span>
+              </div>
+              
+              <div className="mb-2">
+                <span className="text-gray-700">Producto: </span>
+                <span className="font-medium">{order.product_name}</span>
+              </div>
+              
+              <div className="mb-2">
+                <span className="text-gray-700">Cantidad: </span>
+                <span className="font-medium">{order.amount}</span>
+              </div>
+              
+              <div className="mb-2">
+                <span className="text-gray-700">Total: </span>
+                <span className="font-medium">{order.amount * order.price}€</span>
+              </div>
+              
+              <div className="text-sm text-gray-500">
+                <span>Teléfono: </span>
+                <span>{order.phone}</span>
+              </div>
+              
+              {order.message && (
+                <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                  "{order.message}"
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </main>
   );
 }

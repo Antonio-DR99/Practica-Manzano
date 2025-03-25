@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 /* Importación de Tailwind */
-@tailwind base;
-@tailwind components;
+@import "tailwindcss/preflight";
 @tailwind utilities;
+
 
 :root {
   --background: #ffffff;  /* Color de fondo claro */
