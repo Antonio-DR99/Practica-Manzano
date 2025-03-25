@@ -26,7 +26,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
-        <h1 className="text-2xl font-bold mb-4 text-center text-black" >Panel Administrador</h1>
+        <h1 className="text-2xl font-bold mb-4 text-center text-black" >Iniciar Sesion</h1>
         
         {error && <p className="text-red-500 text-center">{error}</p>}
         
@@ -37,14 +37,14 @@ export default function LoginPage() {
             name="email"
             placeholder="Email"
             required
-            className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 placeholder:text-black"
+            className="p-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 placeholder:text-black"
           />
           <input
             type="password"
             name="password"
             placeholder="Contraseña"
             required
-            className="p-2 border rounded-lg focus:ring-2 focus:ring-blue-500 placeholder:text-black"
+            className="p-2 border rounded-lg text-black focus:ring-2 focus:ring-blue-500 placeholder:text-black"
           />
           <button type="submit" className="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 cursor-pointer">
             Ingresar
