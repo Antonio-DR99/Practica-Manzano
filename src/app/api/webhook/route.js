@@ -33,7 +33,6 @@ export async function POST(req) {
 
 function processMessage(message) {
   // Aquí implementaremos la lógica para extraer la información del pedido del mensaje
-  // Este es un ejemplo simple, deberías adaptarlo según tus necesidades
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('gafas')) {
