@@ -10,13 +10,13 @@ export default function Navbar() {
               <Link href="/" className="text-gray-800 hover:text-blue-600">
                 Inicio
               </Link>
-              <Link href="/productos" className="text-gray-800 hover:text-blue-600">
+              <Link href="/pages/productos" className="text-gray-800 hover:text-blue-600">
                 Productos
               </Link>
-              <Link href="/pedidos" className="text-gray-800 hover:text-blue-600">
+              <Link href="/pages/pedidos" className="text-gray-800 hover:text-blue-600">
                 Pedidos
               </Link>
-              <Link href="/usuarios" className="text-gray-800 hover:text-blue-600">
+              <Link href="/pages/usuarios" className="text-gray-800 hover:text-blue-600">
                 Usuarios
               </Link>
             </div>
