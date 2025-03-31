@@ -18,6 +18,13 @@ export default function PedidosPage() {
     { id: 3, cliente: 'Carlos Ruiz', producto: 'Auriculares', estado: 'Entregado', fecha: '2025-04-03' },
   ];
 
+  // Agrupar pedidos por fecha para mostrarlos en el header
+  const ordersCountByDay = pedidos.reduce((acc, pedido) => {
+    const key = new Date(pedido.fecha).toLocaleDateString();
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
   // Filtra los pedidos para el día seleccionado
   const obtenerPedidosDelDia = (fecha) => {
     const pedidosFiltrados = pedidos.filter(
@@ -30,6 +37,24 @@ export default function PedidosPage() {
   const handleDateChange = (date) => {
     setFechaSeleccionada(date);
     obtenerPedidosDelDia(date); // Filtra los pedidos para la fecha seleccionada
+  };
+
+  // Componente custom para renderizar el encabezado de cada día en la vista semanal
+  const CustomDateHeader = ({ label, date }) => {
+    const dateKey = new Date(date).toLocaleDateString();
+    const count = ordersCountByDay[dateKey] || 0;
+    return (
+      <div className="flex flex-col items-center justify-center py-2">
+        <span className="font-bold text-sm text-gray-700">{label}</span>
+        {count > 0 ? (
+          <span className="mt-1 bg-gray-200 px-2 py-0.5 rounded-full text-xs">
+            {count} pedidos
+          </span>
+        ) : (
+          <span className="mt-1 text-gray-400 text-xs">—</span>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -45,23 +70,28 @@ export default function PedidosPage() {
             <div className="min-h-screen bg-white text-black p-6">
               <Calendar
                 localizer={localizer}
-                events={[]} // No hay eventos
+                events={[]} // No hay eventos para mostrar en la grilla principal
                 startAccessor="start"
                 endAccessor="end"
                 views={['week']} // Vista de semana
                 step={60}
                 view="week" // Vista de semana activa
                 formats={{
-                  dayFormat: 'dd', // Mostrar días cortos (Lun, Mar, Mié, etc.)
-                  weekdayFormat: 'ddd', // Formato de días de la semana (abreviados)
+                  // Los formatos se pueden ajustar, pero usaremos el componente custom para el header
                 }}
                 onNavigate={handleDateChange}
-                // Ocultar eventos de hora
+                // Ocultar eventos (si no los necesitas en la grilla)
                 eventPropGetter={() => ({
                   style: {
-                    display: 'none', // No mostrar eventos
+                    display: 'none',
                   },
                 })}
+                // Aquí inyectamos nuestro componente custom para el encabezado de cada día
+                components={{
+                  week: {
+                    header: CustomDateHeader,
+                  },
+                }}
               />
             </div>
           </div>
