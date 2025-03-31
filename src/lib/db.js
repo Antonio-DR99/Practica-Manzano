@@ -80,6 +80,26 @@ export async function getProductById(idproduct) {
 }
 
 // Funciones para Users
+export async function getUsers() {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM usuarios');
+    return rows;
+  } catch (error) {
+    console.error('Error getting users:', error);
+    throw error;
+  }
+}
+
+export async function getUserById(iduser) {
+  try {
+    const [rows] = await pool.execute('SELECT * FROM usuarios WHERE iduser = ?', [iduser]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error getting user by id:', error);
+    throw error;
+  }
+}
+
 export async function getUserByPhone(phone) {
   try {
     const [rows] = await pool.execute('SELECT * FROM usuarios WHERE phone = ?', [phone]);
