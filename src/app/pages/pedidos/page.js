@@ -95,7 +95,6 @@ export default function PedidosPage() {
     <div className="min-h-screen bg-white text-black p-6">
       <div className="max-w-7xl mx-auto">
         <div className="p-8 rounded-xl shadow-lg">
-          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Pedidos</h1>
 
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4 text-center">Calendario de Pedidos</h2>
