@@ -659,3 +659,5 @@ export default function CitasPage() {
         </div>
       )}
     </div>
+  );
+}
