@@ -15,7 +15,7 @@ export async function POST(req) {
     const fromNumber = formData.get('From').replace('whatsapp:', '');
 
     // Intentar obtener el usuario por número de teléfono
-    let user = await getUserByPhone(parseInt(fromNumber));
+    let user = await getUserByPhone(parseInt(fromNumber)); 
     
     // Si el usuario no existe, crearlo
     if (!user) {
