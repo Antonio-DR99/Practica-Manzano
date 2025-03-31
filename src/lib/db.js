@@ -123,6 +123,49 @@ export async function createUser({ email, name, phone, password, role }) {
   }
 }
 
+export async function updateUser({ iduser, email, name, phone, role }) {
+  try {
+    const [result] = await pool.execute(
+      'UPDATE usuarios SET email = ?, name = ?, phone = ?, role = ? WHERE iduser = ?',
+      [email, name, phone, role, iduser]
+    );
+    return result;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+}
+
+export async function deleteUser(iduser) {
+  try {
+    const [result] = await pool.execute('DELETE FROM usuarios WHERE iduser = ?', [iduser]);
+    return result;
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    throw error;
+  }
+}
+
+export async function getUserStats() {
+  try {
+    // Obtener estadísticas de usuarios
+    const [totalResult] = await pool.execute('SELECT COUNT(*) as total FROM usuarios');
+    const [activeResult] = await pool.execute('SELECT COUNT(*) as active FROM usuarios WHERE role = ?', ['client']);
+    const [newUsersResult] = await pool.execute(
+      'SELECT COUNT(*) as newUsers FROM usuarios WHERE created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)'
+    );
+    
+    return {
+      total: totalResult[0].total,
+      active: activeResult[0].active,
+      newUsers: newUsersResult[0].newUsers || 0
+    };
+  } catch (error) {
+    console.error('Error getting user stats:', error);
+    throw error;
+  }
+}
+
 export async function validateUser(email, password) {
   try {
     const [rows] = await pool.execute(
