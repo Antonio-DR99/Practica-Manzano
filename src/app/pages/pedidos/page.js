@@ -1,4 +1,4 @@
-'use client'; // Directiva para marcar el componente como cliente
+'use client';
 
 import { useState } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -7,54 +7,88 @@ import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = momentLocalizer(moment);
 
+// Definimos el componente custom para la vista semanal
+function CustomWeekView({ date, events, localizer, onNavigate }) {
+  // Calcula el inicio de la semana (por defecto, domingo)
+  const startOfWeek = moment(date).startOf('week');
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    days.push(moment(startOfWeek).add(i, 'days').toDate());
+  }
+
+  // Agrupar pedidos por día usando la propiedad "fecha" de cada evento
+  const ordersCountByDay = events.reduce((acc, event) => {
+    const eventDate = new Date(event.fecha);
+    const key = eventDate.toLocaleDateString();
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+
+  return (
+    <div className="custom-week-view p-4">
+      <div className="grid grid-cols-7 gap-2">
+        {days.map((day) => {
+          const label = localizer.format(day, 'ddd'); // Ejemplo: "Sun", "Mon", etc.
+          const dateNumber = day.getDate();
+          const count = ordersCountByDay[day.toLocaleDateString()] || 0;
+          return (
+            <div
+              key={day.toISOString()}
+              className="border rounded-lg p-4 flex flex-col items-center cursor-pointer hover:bg-gray-100"
+              onClick={() => onNavigate(day)}
+            >
+              <div className="font-bold text-sm text-gray-700">{label}</div>
+              <div className="mt-1 text-md font-medium text-gray-800">{dateNumber}</div>
+              {count > 0 ? (
+                <div className="mt-1 bg-gray-200 px-2 py-0.5 rounded-full text-xs">
+                  {count} pedidos
+                </div>
+              ) : (
+                <div className="mt-1 text-gray-400 text-xs">—</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Agregamos las propiedades estáticas requeridas por React Big Calendar
+CustomWeekView.range = (date, { localizer }) => {
+  const startOfWeek = moment(date).startOf('week');
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    days.push(moment(startOfWeek).add(i, 'days').toDate());
+  }
+  return days;
+};
+
+CustomWeekView.title = (date, { localizer }) => {
+  const range = CustomWeekView.range(date, { localizer });
+  const start = range[0];
+  const end = range[range.length - 1];
+  return `${localizer.format(start, 'MMM DD')} - ${localizer.format(end, 'MMM DD')}`;
+};
+
 export default function PedidosPage() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
   const [pedidosDelDia, setPedidosDelDia] = useState([]);
 
-  // Lista de pedidos (simulada, reemplázala con tus datos reales)
+  // Lista de pedidos (simulada; reemplaza con tus datos reales)
   const pedidos = [
     { id: 1, cliente: 'Juan Pérez', producto: 'Laptop', estado: 'Enviado', fecha: '2025-03-31' },
     { id: 2, cliente: 'Ana Gómez', producto: 'Teléfono', estado: 'Pendiente', fecha: '2025-04-02' },
     { id: 3, cliente: 'Carlos Ruiz', producto: 'Auriculares', estado: 'Entregado', fecha: '2025-04-03' },
   ];
 
-  // Agrupar pedidos por fecha para mostrarlos en el header
-  const ordersCountByDay = pedidos.reduce((acc, pedido) => {
-    const key = new Date(pedido.fecha).toLocaleDateString();
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Filtra los pedidos para el día seleccionado
+  // Filtra los pedidos para la fecha seleccionada
   const obtenerPedidosDelDia = (fecha) => {
     const pedidosFiltrados = pedidos.filter(
       (pedido) => new Date(pedido.fecha).toLocaleDateString() === fecha.toLocaleDateString()
     );
     setPedidosDelDia(pedidosFiltrados);
-  };
-
-  // Maneja el cambio de fecha al hacer clic en un día
-  const handleDateChange = (date) => {
-    setFechaSeleccionada(date);
-    obtenerPedidosDelDia(date); // Filtra los pedidos para la fecha seleccionada
-  };
-
-  // Componente custom para renderizar el encabezado de cada día en la vista semanal
-  const CustomDateHeader = ({ label, date }) => {
-    const dateKey = new Date(date).toLocaleDateString();
-    const count = ordersCountByDay[dateKey] || 0;
-    return (
-      <div className="flex flex-col items-center justify-center py-2">
-        <span className="font-bold text-sm text-gray-700">{label}</span>
-        {count > 0 ? (
-          <span className="mt-1 bg-gray-200 px-2 py-0.5 rounded-full text-xs">
-            {count} pedidos
-          </span>
-        ) : (
-          <span className="mt-1 text-gray-400 text-xs">—</span>
-        )}
-      </div>
-    );
+    setFechaSeleccionada(fecha);
   };
 
   return (
@@ -65,44 +99,25 @@ export default function PedidosPage() {
 
           <div className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-700 mb-4 text-center">Calendario de Pedidos</h2>
-
-            {/* Calendario de semana horizontal */}
-            <div className="min-h-screen bg-white text-black p-6">
-              <Calendar
-                localizer={localizer}
-                events={[]} // No hay eventos para mostrar en la grilla principal
-                startAccessor="start"
-                endAccessor="end"
-                views={['week']} // Vista de semana
-                step={60}
-                view="week" // Vista de semana activa
-                formats={{
-                  // Los formatos se pueden ajustar, pero usaremos el componente custom para el header
-                }}
-                onNavigate={handleDateChange}
-                // Ocultar eventos (si no los necesitas en la grilla)
-                eventPropGetter={() => ({
-                  style: {
-                    display: 'none',
-                  },
-                })}
-                // Aquí inyectamos nuestro componente custom para el encabezado de cada día
-                components={{
-                  week: {
-                    header: CustomDateHeader,
-                  },
-                }}
-              />
-            </div>
+            {/* Usamos nuestro custom view a través de react-big-calendar */}
+            <Calendar
+              localizer={localizer}
+              events={pedidos} // Pasamos los pedidos como eventos
+              views={{ customWeek: CustomWeekView }}
+              view="customWeek" // Indicamos que use la vista custom
+              toolbar={false}
+              // No necesitamos renderizar los eventos en la grilla (lo maneja nuestro CustomWeekView)
+              eventPropGetter={() => ({ style: { display: 'none' } })}
+              // Al navegar (por ejemplo, al hacer clic en un día) actualizamos la fecha
+              onNavigate={(newDate) => obtenerPedidosDelDia(newDate)}
+            />
           </div>
 
-          {/* Pedidos para la fecha seleccionada */}
+          {/* Sección para mostrar los pedidos del día seleccionado */}
           <div className="p-6 rounded-xl shadow-md mt-6 bg-white text-black">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Pedidos para {fechaSeleccionada.toLocaleDateString()}
             </h3>
-
-            {/* Lista de pedidos */}
             <div className="space-y-4">
               {pedidosDelDia.length > 0 ? (
                 pedidosDelDia.map((pedido) => (

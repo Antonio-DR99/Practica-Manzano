@@ -657,4 +657,4 @@ export default function CitasPage() {
         <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-md shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white transition-opacity duration-300`}>
           {notification.message}
         </div>
-      )}
+      )}    </div>
