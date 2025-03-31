@@ -1,9 +1,96 @@
+'use client'; // Directiva para marcar el componente como cliente
+
+import { useState } from 'react';
+import { Calendar, momentLocalizer } from 'react-big-calendar';
+import moment from 'moment';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
+
+const localizer = momentLocalizer(moment);
+
 export default function PedidosPage() {
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
+  const [pedidosDelDia, setPedidosDelDia] = useState([]);
+
+  // Lista de pedidos (simulada, reemplázala con tus datos reales)
+  const pedidos = [
+    { id: 1, cliente: 'Juan Pérez', producto: 'Laptop', estado: 'Enviado', fecha: '2025-03-31' },
+    { id: 2, cliente: 'Ana Gómez', producto: 'Teléfono', estado: 'Pendiente', fecha: '2025-04-02' },
+    { id: 3, cliente: 'Carlos Ruiz', producto: 'Auriculares', estado: 'Entregado', fecha: '2025-04-03' },
+  ];
+
+  // Filtra los pedidos para el día seleccionado
+  const obtenerPedidosDelDia = (fecha) => {
+    const pedidosFiltrados = pedidos.filter(
+      (pedido) => new Date(pedido.fecha).toLocaleDateString() === fecha.toLocaleDateString()
+    );
+    setPedidosDelDia(pedidosFiltrados);
+  };
+
+  // Maneja el cambio de fecha al hacer clic en un día
+  const handleDateChange = (date) => {
+    setFechaSeleccionada(date);
+    obtenerPedidosDelDia(date); // Filtra los pedidos para la fecha seleccionada
+  };
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-4">Pedidos</h1>
-      <div className="grid gap-4">
+    <div className="min-h-screen bg-gradient-to-r from-blue-50 via-indigo-100 to-purple-200 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white p-8 rounded-xl shadow-lg">
+          <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Pedidos</h1>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-4 text-center">Calendario de Pedidos</h2>
+
+            {/* Calendario de semana horizontal */}
+            <div className="rounded-lg shadow-xl p-4 bg-white text-gray-700" >
+              <Calendar
+                localizer={localizer}
+                events={[]} // No hay eventos
+                startAccessor="start"
+                endAccessor="end"
+                views={['week']} // Vista de semana
+                step={60}
+                view="week" // Vista de semana activa
+                formats={{
+                  dayFormat: 'dd', // Mostrar días cortos (Lun, Mar, Mié, etc.)
+                  weekdayFormat: 'ddd', // Formato de días de la semana (abreviados)
+                }}
+                onNavigate={handleDateChange}
+                // Ocultar eventos de hora
+                eventPropGetter={() => ({
+                  style: {
+                    display: 'none', // No mostrar eventos
+                  },
+                })}
+              />
+            </div>
+          </div>
+
+          {/* Pedidos para la fecha seleccionada */}
+          <div className="bg-white p-6 rounded-xl shadow-md mt-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Pedidos para {fechaSeleccionada.toLocaleDateString()}
+            </h3>
+
+            {/* Lista de pedidos */}
+            <div className="space-y-4">
+              {pedidosDelDia.length > 0 ? (
+                pedidosDelDia.map((pedido) => (
+                  <div key={pedido.id} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                    <p className="font-medium text-gray-700">Cliente: {pedido.cliente}</p>
+                    <p className="text-gray-600">Producto: {pedido.producto}</p>
+                    <p className="text-gray-500">Estado: {pedido.estado}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500">No hay pedidos para este día.</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
+
