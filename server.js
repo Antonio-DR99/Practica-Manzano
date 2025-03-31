@@ -203,6 +203,6 @@ async function sendWhatsAppResponse(toNumber, message) {
 
 // Iniciar el servidor
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
+app.listen(PORT,'0.0.0.0', () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
