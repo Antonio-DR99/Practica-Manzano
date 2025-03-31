@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function UsuariosPage() {
   const [users, setUsers] = useState([]);
@@ -10,11 +10,25 @@ export default function UsuariosPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
   const [activeUsers, setActiveUsers] = useState(0);
+  const [newUsers, setNewUsers] = useState(0);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: 'client'
+  });
+  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const usersPerPage = 10;
+  const modalRef = useRef(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        // Obtener usuarios
         const response = await fetch('/api/users');
         if (!response.ok) {
           throw new Error('Error al cargar usuarios');
@@ -22,8 +36,20 @@ export default function UsuariosPage() {
         const data = await response.json();
         setUsers(data);
         setFilteredUsers(data);
-        setTotalUsers(data.length);
-        setActiveUsers(data.filter(user => user.role === 'client').length);
+        
+        // Obtener estadísticas
+        const statsResponse = await fetch('/api/users?stats=true');
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          setTotalUsers(statsData.total);
+          setActiveUsers(statsData.active);
+          setNewUsers(statsData.newUsers);
+        } else {
+          // Si falla, usar los datos calculados localmente
+          setTotalUsers(data.length);
+          setActiveUsers(data.filter(user => user.role === 'client').length);
+        }
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -32,6 +58,22 @@ export default function UsuariosPage() {
     };
 
     fetchUsers();
+  }, []);
+  
+  // Cerrar modal al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setShowEditModal(false);
+        setShowDeleteModal(false);
+        setShowAddModal(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -66,6 +108,139 @@ export default function UsuariosPage() {
       day: 'numeric'
     });
   };
+  
+  // Manejar cambios en el formulario
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+  
+  // Abrir modal de edición
+  const handleEditClick = (user) => {
+    setCurrentUser(user);
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role
+    });
+    setShowEditModal(true);
+  };
+  
+  // Abrir modal de eliminación
+  const handleDeleteClick = (user) => {
+    setCurrentUser(user);
+    setShowDeleteModal(true);
+  };
+  
+  // Abrir modal de añadir usuario
+  const handleAddClick = () => {
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'client'
+    });
+    setShowAddModal(true);
+  };
+  
+  // Guardar usuario editado
+  const handleSaveEdit = async () => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          iduser: currentUser.iduser,
+          ...formData
+        }),
+      });
+      
+      if (response.ok) {
+        // Actualizar usuario en el estado local
+        const updatedUsers = users.map(user => 
+          user.iduser === currentUser.iduser ? { ...user, ...formData } : user
+        );
+        setUsers(updatedUsers);
+        setFilteredUsers(updatedUsers);
+        setShowEditModal(false);
+        showNotification('Usuario actualizado correctamente', 'success');
+      } else {
+        const error = await response.json();
+        showNotification(`Error: ${error.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      showNotification('Error al actualizar el usuario', 'error');
+    }
+  };
+  
+  // Eliminar usuario
+  const handleConfirmDelete = async () => {
+    try {
+      const response = await fetch(`/api/users?id=${currentUser.iduser}`, {
+        method: 'DELETE',
+      });
+      
+      if (response.ok) {
+        // Eliminar usuario del estado local
+        const updatedUsers = users.filter(user => user.iduser !== currentUser.iduser);
+        setUsers(updatedUsers);
+        setFilteredUsers(updatedUsers);
+        setShowDeleteModal(false);
+        showNotification('Usuario eliminado correctamente', 'success');
+      } else {
+        const error = await response.json();
+        showNotification(`Error: ${error.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      showNotification('Error al eliminar el usuario', 'error');
+    }
+  };
+  
+  // Añadir nuevo usuario
+  const handleAddUser = async () => {
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        // Añadir usuario al estado local con el ID generado
+        const newUser = { ...formData, iduser: result.id };
+        const updatedUsers = [...users, newUser];
+        setUsers(updatedUsers);
+        setFilteredUsers(updatedUsers);
+        setShowAddModal(false);
+        showNotification('Usuario añadido correctamente', 'success');
+      } else {
+        const error = await response.json();
+        showNotification(`Error: ${error.error}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error adding user:', error);
+      showNotification('Error al añadir el usuario', 'error');
+    }
+  };
+  
+  // Mostrar notificación
+  const showNotification = (message, type) => {
+    setNotification({ show: true, message, type });
+    setTimeout(() => {
+      setNotification({ show: false, message: '', type: '' });
+    }, 3000);
+  };
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -87,7 +262,7 @@ export default function UsuariosPage() {
           </div>
           <div className="mt-2">
             <p className="text-3xl font-bold">{totalUsers}</p>
-            <p className="text-green-500 text-sm">+8 este mes</p>
+            <p className="text-green-500 text-sm">+{newUsers} este mes</p>
           </div>
         </div>
 
@@ -102,7 +277,7 @@ export default function UsuariosPage() {
           </div>
           <div className="mt-2">
             <p className="text-3xl font-bold">{activeUsers}</p>
-            <p className="text-gray-500 text-sm">72% del total</p>
+            <p className="text-gray-500 text-sm">{totalUsers > 0 ? Math.round((activeUsers / totalUsers) * 100) : 0}% del total</p>
           </div>
         </div>
 
@@ -158,7 +333,10 @@ export default function UsuariosPage() {
             />
           </div>
           
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+          <button 
+            onClick={handleAddClick}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center"
+          >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
             </svg>
@@ -203,12 +381,20 @@ export default function UsuariosPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">
+                        <button 
+                          onClick={() => handleEditClick(user)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          aria-label="Editar usuario"
+                        >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                           </svg>
                         </button>
-                        <button className="text-red-600 hover:text-red-900">
+                        <button 
+                          onClick={() => handleDeleteClick(user)}
+                          className="text-red-600 hover:text-red-900"
+                          aria-label="Eliminar usuario"
+                        >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
@@ -292,6 +478,175 @@ export default function UsuariosPage() {
           </div>
         )}
       </div>
+      
+      {/* Modal de Edición */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4">Editar Usuario</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="client">Cliente</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal de Eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4">Confirmar Eliminación</h3>
+            <p className="mb-6">¿Estás seguro de que deseas eliminar a <span className="font-semibold">{currentUser?.name}</span>? Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Modal de Añadir Usuario */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-xl font-semibold mb-4">Añadir Nuevo Usuario</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="client">Cliente</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddUser}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Añadir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Notificación */}
+      {notification.show && (
+        <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-md shadow-md ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white`}>
+          {notification.message}
+        </div>
+      )}
     </div>
   );
 }
