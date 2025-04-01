@@ -11,8 +11,32 @@ moment.locale('es');
 const localizer = momentLocalizer(moment);
 
 export default function CitasPage() {
-  const [currentMonth, setCurrentMonth] = useState(moment().format('MMMM YYYY'));
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // Inicializar estados con valores que no dependan del tiempo actual
+  const [currentMonth, setCurrentMonth] = useState('');
+  const [selectedDate, setSelectedDate] = useState(null);
+  
+  // Inicializar la fecha seleccionada en el cliente para evitar discrepancias
+  useEffect(() => {
+    const today = new Date();
+    setSelectedDate(today);
+    setCurrentMonth(moment(today).format('MMMM YYYY'));
+    
+    // Cargar usuarios para los selectores de clientes
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/users');
+        if (!response.ok) {
+          throw new Error('Error al cargar usuarios');
+        }
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -25,8 +49,10 @@ export default function CitasPage() {
     date: '',
     time: '',
     duration: 60,
-    notes: ''
+    notes: '',
+    userId: ''
   });
+  const [users, setUsers] = useState([]);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const modalRef = useRef(null);
 
@@ -51,14 +77,45 @@ export default function CitasPage() {
   ];
 
   useEffect(() => {
-    // Aquí se cargarían las citas desde la API
-    // Por ahora usamos datos de ejemplo
-    setAppointments(sampleAppointments);
+    // Cargar citas desde la API
+    const fetchAppointments = async () => {
+      try {
+        const response = await fetch('/api/quotes');
+        if (!response.ok) {
+          throw new Error('Error al cargar citas');
+        }
+        const data = await response.json();
+        
+        // Transformar los datos de la API al formato que espera el calendario
+        const formattedAppointments = data.map(quote => ({
+          id: quote.idquote,
+          title: quote.massage || 'Sin título',
+          clientName: quote.user_name,
+          start: new Date(quote.date),
+          end: new Date(new Date(quote.date).getTime() + (quote.duration || 60) * 60000),
+          notes: quote.massage,
+          userId: quote.iduser,
+          phone: quote.phone,
+          email: quote.email
+        }));
+        
+        setAppointments(formattedAppointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        showNotification('Error al cargar las citas', 'error');
+        // Usar datos de ejemplo en caso de error
+        setAppointments(sampleAppointments);
+      }
+    };
+
+    fetchAppointments();
   }, []);
 
   useEffect(() => {
-    // Filtrar citas para la fecha seleccionada
-    filterAppointmentsByDate(selectedDate);
+    // Filtrar citas para la fecha seleccionada solo si selectedDate está definido
+    if (selectedDate) {
+      filterAppointmentsByDate(selectedDate);
+    }
   }, [selectedDate, appointments]);
 
   // Cerrar modal al hacer clic fuera
@@ -104,7 +161,8 @@ export default function CitasPage() {
       date: moment(selectedDate).format('YYYY-MM-DD'),
       time: '09:00',
       duration: 60,
-      notes: ''
+      notes: '',
+      userId: ''
     });
     setShowAddModal(true);
   };
@@ -117,7 +175,8 @@ export default function CitasPage() {
       date: moment(appointment.start).format('YYYY-MM-DD'),
       time: moment(appointment.start).format('HH:mm'),
       duration: moment(appointment.end).diff(moment(appointment.start), 'minutes'),
-      notes: appointment.notes || ''
+      notes: appointment.notes || '',
+      userId: appointment.userId || ''
     });
     setShowEditModal(true);
   };
@@ -127,60 +186,145 @@ export default function CitasPage() {
     setShowDeleteModal(true);
   };
 
-  const handleAddAppointment = () => {
-    const startDateTime = moment(`${formData.date} ${formData.time}`).toDate();
-    const endDateTime = moment(startDateTime).add(formData.duration, 'minutes').toDate();
-    
-    const newAppointment = {
-      id: Date.now(), // Generamos un ID temporal
-      title: formData.title,
-      clientName: formData.clientName,
-      start: startDateTime,
-      end: endDateTime,
-      notes: formData.notes
-    };
-    
-    // Aquí se enviaría a la API
-    // Por ahora solo actualizamos el estado local
-    setAppointments([...appointments, newAppointment]);
-    setShowAddModal(false);
-    showNotification('Cita añadida correctamente', 'success');
+  const handleAddAppointment = async () => {
+    try {
+      const startDateTime = moment(`${formData.date} ${formData.time}`).toDate();
+      const endDateTime = moment(startDateTime).add(formData.duration, 'minutes').toDate();
+      
+      // Verificar que se ha seleccionado un usuario
+      if (!formData.userId) {
+        showNotification('Por favor, selecciona un cliente', 'error');
+        return;
+      }
+      
+      // Preparar datos para la API
+      const quoteData = {
+        date: startDateTime.toISOString(),
+        duration: parseInt(formData.duration),
+        massage: formData.notes || formData.title, // Usar el título como mensaje si no hay notas
+        iduser: parseInt(formData.userId)
+      };
+      
+      // Enviar a la API
+      const response = await fetch('/api/quotes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quoteData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al crear la cita');
+      }
+      
+      const result = await response.json();
+      
+      // Crear objeto de cita para la UI con el ID devuelto por la API
+      const newAppointment = {
+        id: result.id,
+        title: formData.title,
+        clientName: formData.clientName,
+        start: startDateTime,
+        end: endDateTime,
+        notes: formData.notes,
+        userId: userId
+      };
+      
+      // Actualizar estado local
+      setAppointments([...appointments, newAppointment]);
+      setShowAddModal(false);
+      showNotification('Cita añadida correctamente', 'success');
+    } catch (error) {
+      console.error('Error adding appointment:', error);
+      showNotification(error.message || 'Error al añadir la cita', 'error');
+    }
   };
 
-  const handleSaveEdit = () => {
-    const startDateTime = moment(`${formData.date} ${formData.time}`).toDate();
-    const endDateTime = moment(startDateTime).add(formData.duration, 'minutes').toDate();
-    
-    const updatedAppointment = {
-      ...currentAppointment,
-      title: formData.title,
-      clientName: formData.clientName,
-      start: startDateTime,
-      end: endDateTime,
-      notes: formData.notes
-    };
-    
-    // Aquí se enviaría a la API
-    // Por ahora solo actualizamos el estado local
-    const updatedAppointments = appointments.map(appointment => 
-      appointment.id === currentAppointment.id ? updatedAppointment : appointment
-    );
-    
-    setAppointments(updatedAppointments);
-    setShowEditModal(false);
-    showNotification('Cita actualizada correctamente', 'success');
+  const handleSaveEdit = async () => {
+    try {
+      const startDateTime = moment(`${formData.date} ${formData.time}`).toDate();
+      const endDateTime = moment(startDateTime).add(formData.duration, 'minutes').toDate();
+      
+      // Verificar que se ha seleccionado un usuario
+      const userId = formData.userId || currentAppointment.userId;
+      if (!userId) {
+        showNotification('Por favor, selecciona un cliente', 'error');
+        return;
+      }
+      
+      // Preparar datos para la API
+      const quoteData = {
+        idquote: currentAppointment.id,
+        date: startDateTime.toISOString(),
+        duration: parseInt(formData.duration),
+        massage: formData.notes || formData.title, // Usar el título como mensaje si no hay notas
+        iduser: parseInt(userId)
+      };
+      
+      // Enviar a la API
+      const response = await fetch('/api/quotes', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(quoteData),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al actualizar la cita');
+      }
+      
+      // Actualizar objeto de cita para la UI
+      const updatedAppointment = {
+        ...currentAppointment,
+        title: formData.title,
+        clientName: formData.clientName,
+        start: startDateTime,
+        end: endDateTime,
+        notes: formData.notes
+      };
+      
+      // Actualizar estado local
+      const updatedAppointments = appointments.map(appointment => 
+        appointment.id === currentAppointment.id ? updatedAppointment : appointment
+      );
+      
+      setAppointments(updatedAppointments);
+      setShowEditModal(false);
+      showNotification('Cita actualizada correctamente', 'success');
+    } catch (error) {
+      console.error('Error updating appointment:', error);
+      showNotification(error.message || 'Error al actualizar la cita', 'error');
+    }
   };
 
-  const handleConfirmDelete = () => {
-    // Aquí se enviaría a la API
-    // Por ahora solo actualizamos el estado local
-    const updatedAppointments = appointments.filter(
-      appointment => appointment.id !== currentAppointment.id
-    );
-    
-    setAppointments(updatedAppointments);
-    setShowDeleteModal(false);
-    showNotification('Cita eliminada correctamente', 'success');
+  const handleConfirmDelete = async () => {
+    try {
+      // Enviar solicitud de eliminación a la API
+      const response = await fetch(`/api/quotes?id=${currentAppointment.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al eliminar la cita');
+      }
+      
+      // Actualizar estado local eliminando la cita
+      const updatedAppointments = appointments.filter(
+        appointment => appointment.id !== currentAppointment.id
+      );
+      
+      setAppointments(updatedAppointments);
+      setShowDeleteModal(false);
+      showNotification('Cita eliminada correctamente', 'success');
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      showNotification(error.message || 'Error al eliminar la cita', 'error');
+    }
   };
 
   const showNotification = (message, type) => {
@@ -195,6 +339,11 @@ export default function CitasPage() {
     return moment(date).format('HH:mm');
   };
 
+  // Solo renderizar el contenido cuando selectedDate esté definido para evitar discrepancias
+  if (!selectedDate) {
+    return <div className="bg-white rounded-lg shadow p-6">Cargando...</div>;
+  }
+  
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="mb-6">
@@ -230,8 +379,10 @@ export default function CitasPage() {
           </div>
           <div className="mt-2">
             <p className="text-3xl font-bold">
+
+
               {appointments.filter(appointment => 
-                moment(appointment.start).isSame(moment(), 'day')
+                selectedDate && moment(appointment.start).isSame(selectedDate, 'day')
               ).length}
             </p>
             <p className="text-gray-500 text-sm">Pendientes hoy</p>
@@ -251,10 +402,10 @@ export default function CitasPage() {
             {appointments.length > 0 ? (
               <>
                 <p className="text-lg font-semibold">
-                  {appointments.sort((a, b) => a.start - b.start)[0]?.title}
+                  {[...appointments].sort((a, b) => a.start - b.start)[0]?.title}
                 </p>
                 <p className="text-gray-500 text-sm">
-                  {moment(appointments.sort((a, b) => a.start - b.start)[0]?.start).format('DD MMM, HH:mm')}
+                  {moment([...appointments].sort((a, b) => a.start - b.start)[0]?.start).format('DD MMM, HH:mm')}
                 </p>
               </>
             ) : (
@@ -382,7 +533,7 @@ export default function CitasPage() {
             <div className="p-4 overflow-y-auto" style={{ maxHeight: '500px' }}>
               {filteredAppointments.length > 0 ? (
                 <div className="space-y-4">
-                  {filteredAppointments
+                  {[...filteredAppointments]
                     .sort((a, b) => a.start - b.start)
                     .map((appointment) => (
                       <div key={appointment.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
@@ -461,15 +612,20 @@ export default function CitasPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Cliente</label>
-                <input
-                  type="text"
-                  name="clientName"
-                  value={formData.clientName}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                <select
+                  name="userId"
+                  value={formData.userId}
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Ej: Juan Pérez"
-                />
+                >
+                  <option value="">Seleccionar cliente</option>
+                  {users.map(user => (
+                    <option key={user.iduser} value={user.iduser}>
+                      {user.name} - {user.phone}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -554,14 +710,20 @@ export default function CitasPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del Cliente</label>
-                <input
-                  type="text"
-                  name="clientName"
-                  value={formData.clientName}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                <select
+                  name="userId"
+                  value={formData.userId}
                   onChange={handleInputChange}
                   className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                />
+                >
+                  <option value="">Seleccionar cliente</option>
+                  {users.map(user => (
+                    <option key={user.iduser} value={user.iduser}>
+                      {user.name} - {user.phone}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -659,3 +821,5 @@ export default function CitasPage() {
         </div>
       )}
     </div>
+  );
+}

@@ -178,3 +178,90 @@ export async function validateUser(email, password) {
     throw error;
   }
 }
+
+// Funciones para Quotes (Citas)
+export async function getQuotes({ userId, date } = {}) {
+  try {
+    let query = `
+      SELECT q.*, u.name as user_name, u.phone, u.email 
+      FROM quotes q 
+      JOIN usuarios u ON q.iduser = u.iduser
+    `;
+    
+    const params = [];
+    const conditions = [];
+    
+    if (userId) {
+      conditions.push('q.iduser = ?');
+      params.push(userId);
+    }
+    
+    if (date) {
+      conditions.push('DATE(q.date) = DATE(?)');
+      params.push(date);
+    }
+    
+    if (conditions.length > 0) {
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+    
+    query += ' ORDER BY q.date ASC';
+    
+    const [rows] = await pool.execute(query, params);
+    return rows;
+  } catch (error) {
+    console.error('Error getting quotes:', error);
+    throw error;
+  }
+}
+
+export async function getQuoteById(idquote) {
+  try {
+    const [rows] = await pool.execute(`
+      SELECT q.*, u.name as user_name, u.phone, u.email 
+      FROM quotes q 
+      JOIN usuarios u ON q.iduser = u.iduser
+      WHERE q.idquote = ?
+    `, [idquote]);
+    return rows[0];
+  } catch (error) {
+    console.error('Error getting quote by id:', error);
+    throw error;
+  }
+}
+
+export async function createQuote({ date, duration, massage, iduser }) {
+  try {
+    const [result] = await pool.execute(
+      'INSERT INTO quotes (date, duration, massage, iduser) VALUES (?, ?, ?, ?)',
+      [date, duration, massage, iduser]
+    );
+    return result;
+  } catch (error) {
+    console.error('Error creating quote:', error);
+    throw error;
+  }
+}
+
+export async function updateQuote({ idquote, date, duration, massage, iduser }) {
+  try {
+    const [result] = await pool.execute(
+      'UPDATE quotes SET date = ?, duration = ?, massage = ?, iduser = ? WHERE idquote = ?',
+      [date, duration, massage, iduser, idquote]
+    );
+    return result;
+  } catch (error) {
+    console.error('Error updating quote:', error);
+    throw error;
+  }
+}
+
+export async function deleteQuote(idquote) {
+  try {
+    const [result] = await pool.execute('DELETE FROM quotes WHERE idquote = ?', [idquote]);
+    return result;
+  } catch (error) {
+    console.error('Error deleting quote:', error);
+    throw error;
+  }
+}
