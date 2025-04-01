@@ -23,53 +23,31 @@ function CustomWeekView({ date, localizer, events, onNavigate }) {
 
   const handlePrevWeek = () => {
     const prevWeek = moment(date).subtract(1, 'week').toDate();
-    onNavigate(Navigate.PREVIOUS, prevWeek);
+    console.log('Navegando a la semana anterior:', prevWeek);
+    onNavigate(prevWeek); // Simplificamos: solo pasamos la nueva fecha
   };
 
   const handleNextWeek = () => {
     const nextWeek = moment(date).add(1, 'week').toDate();
-    onNavigate(Navigate.NEXT, nextWeek);
+    console.log('Navegando a la semana siguiente:', nextWeek);
+    onNavigate(nextWeek); // Simplificamos: solo pasamos la nueva fecha
   };
+
+  const today = new Date();
 
   return (
     <div className="custom-week-view p-4">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-3xl font-semibold text-gray-800">Calendario Pedidos</h3>
         <div className="flex space-x-2">
-          <button
-            onClick={handlePrevWeek}
-            className="p-2 rounded-full hover:bg-gray-200"
-            aria-label="Previous week"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-600"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
-                clipRule="evenodd"
-              />
+          <button onClick={handlePrevWeek} className="p-2 rounded-full hover:bg-gray-200" aria-label="Previous week">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
             </svg>
           </button>
-          <button
-            onClick={handleNextWeek}
-            className="p-2 rounded-full hover:bg-gray-200"
-            aria-label="Next week"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 text-gray-600"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
-                clipRule="evenodd"
-              />
+          <button onClick={handleNextWeek} className="p-2 rounded-full hover:bg-gray-200" aria-label="Next week">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
             </svg>
           </button>
         </div>
@@ -79,21 +57,17 @@ function CustomWeekView({ date, localizer, events, onNavigate }) {
           const label = localizer.format(day, 'ddd');
           const dateNumber = day.getDate();
           const count = ordersCountByDay[day.toLocaleDateString()] || 0;
-          const isToday = moment(day).isSame(new Date(), 'day');
+          const isToday = moment(day).isSame(today, 'day');
           return (
             <div
               key={day.toISOString()}
-              className={`border border-gray-200 rounded-lg p-4 flex flex-col items-center cursor-pointer hover:bg-gray-100 ${
-                isToday ? 'bg-gray-100' : ''
-              }`}
+              className={`border border-gray-200 rounded-lg p-4 flex flex-col items-center cursor-pointer hover:bg-gray-100 ${isToday ? 'bg-gray-100' : ''}`}
               onClick={() => onNavigate(day)}
             >
               <div className="text-sm text-gray-500">{label}</div>
               <div className="mt-1 text-lg font-medium text-gray-800">{dateNumber}</div>
               {count > 0 ? (
-                <div className="mt-2 bg-gray-200 px-3 py-1 rounded-full text-xs text-gray-700">
-                  {count} orders
-                </div>
+                <div className="mt-2 bg-gray-200 px-3 py-1 rounded-full text-xs text-gray-700">{count} orders</div>
               ) : (
                 <div className="mt-2 text-gray-400 text-xs">—</div>
               )}
@@ -135,8 +109,8 @@ CustomWeekView.title = (date, { localizer }) => {
 };
 
 export default function PedidosPage() {
-  const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
+  const [currentDate, setCurrentDate] = useState(null);
   const [pedidosDelDia, setPedidosDelDia] = useState([]);
   const [pedidos, setPedidos] = useState([
     { id: 1, cliente: 'Juan Pérez', producto: 'Laptop', estado: 'Enviado', fecha: '2025-03-31', dinero: 1200 },
@@ -151,42 +125,41 @@ export default function PedidosPage() {
     producto: '',
     estado: 'Pendiente',
     fecha: '',
-    dinero: ''
+    dinero: '',
   });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const modalRef = useRef(null);
 
+  useEffect(() => {
+    const now = new Date();
+    setFechaSeleccionada(now);
+    setCurrentDate(now);
+    obtenerPedidosDelDia(now);
+  }, []);
+
   const obtenerPedidosDelDia = (fecha) => {
+    const fechaValida = fecha instanceof Date && !isNaN(fecha) ? fecha : new Date();
     const pedidosFiltrados = pedidos.filter(
-      (pedido) => new Date(pedido.fecha).toLocaleDateString() === fecha.toLocaleDateString()
+      (pedido) => new Date(pedido.fecha).toLocaleDateString() === fechaValida.toLocaleDateString()
     );
     setPedidosDelDia(pedidosFiltrados);
-    setFechaSeleccionada(fecha);
+    setFechaSeleccionada(fechaValida);
   };
 
-  const handleNavigate = (action, newDate) => {
-    let updatedDate;
-    switch (action) {
-      case Navigate.PREVIOUS:
-        updatedDate = moment(currentDate).subtract(1, 'week').toDate();
-        break;
-      case Navigate.NEXT:
-        updatedDate = moment(currentDate).add(1, 'week').toDate();
-        break;
-      case Navigate.TODAY:
-        updatedDate = new Date();
-        break;
-      default:
-        updatedDate = newDate || currentDate;
-    }
-    setCurrentDate(updatedDate);
-    obtenerPedidosDelDia(updatedDate);
+    const handleNavigate = (newDate) => {
+    console.log('handleNavigate llamado con newDate:', newDate);
+    setCurrentDate(newDate); // Actualiza el estado de la fecha actual
+    obtenerPedidosDelDia(newDate); // Actualiza los pedidos del día
   };
+
+  useEffect(() => {
+    console.log('currentDate actualizado a:', currentDate);
+  }, [currentDate]);
 
   const totalPedidos = pedidos.length;
-  const pedidosPendientes = pedidos.filter(pedido => pedido.estado === 'Pendiente').length;
-  const pedidosEnProceso = pedidos.filter(pedido => pedido.estado === 'Enviado').length;
-  const pedidosCompletados = pedidos.filter(pedido => pedido.estado === 'Entregado').length;
+  const pedidosPendientes = pedidos.filter((pedido) => pedido.estado === 'Pendiente').length;
+  const pedidosEnProceso = pedidos.filter((pedido) => pedido.estado === 'Enviado').length;
+  const pedidosCompletados = pedidos.filter((pedido) => pedido.estado === 'Entregado').length;
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -195,7 +168,6 @@ export default function PedidosPage() {
         setShowDeleteModal(false);
       }
     }
-    
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -204,10 +176,7 @@ export default function PedidosPage() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleEditClick = (pedido) => {
@@ -217,7 +186,7 @@ export default function PedidosPage() {
       producto: pedido.producto,
       estado: pedido.estado,
       fecha: pedido.fecha,
-      dinero: pedido.dinero.toString()
+      dinero: pedido.dinero.toString(),
     });
     setShowEditModal(true);
   };
@@ -228,7 +197,7 @@ export default function PedidosPage() {
   };
 
   const handleSaveEdit = () => {
-    const updatedPedidos = pedidos.map(p => 
+    const updatedPedidos = pedidos.map((p) =>
       p.id === currentPedido.id ? { ...p, ...formData, dinero: parseFloat(formData.dinero) } : p
     );
     setPedidos(updatedPedidos);
@@ -238,7 +207,7 @@ export default function PedidosPage() {
   };
 
   const handleConfirmDelete = () => {
-    const updatedPedidos = pedidos.filter(p => p.id !== currentPedido.id);
+    const updatedPedidos = pedidos.filter((p) => p.id !== currentPedido.id);
     setPedidos(updatedPedidos);
     setShowDeleteModal(false);
     showNotification('Pedido eliminado correctamente', 'success');
@@ -252,6 +221,10 @@ export default function PedidosPage() {
     }, 3000);
   };
 
+  if (!fechaSeleccionada || !currentDate) {
+    return <div>Cargando...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-white text-black p-6">
       <div className="max-w-7xl mx-auto">
@@ -259,36 +232,20 @@ export default function PedidosPage() {
           <h2 className="text-4xl font-semibold text-gray-700 mb-4 text-left">Gestión de Pedidos</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-gray-500 text-sm font-medium">Total Pedidos</h3>
-              </div>
-              <div className="mt-2">
-                <p className="text-3xl font-bold">{totalPedidos}</p>
-              </div>
+              <h3 className="text-gray-500 text-sm font-medium">Total Pedidos</h3>
+              <p className="text-3xl font-bold">{totalPedidos}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-gray-500 text-sm font-medium">Pendientes</h3>
-              </div>
-              <div className="mt-2">
-                <p className="text-3xl font-bold">{pedidosPendientes}</p>
-              </div>
+              <h3 className="text-gray-500 text-sm font-medium">Pendientes</h3>
+              <p className="text-3xl font-bold">{pedidosPendientes}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-gray-500 text-sm font-medium">En Proceso</h3>
-              </div>
-              <div className="mt-2">
-                <p className="text-3xl font-bold">{pedidosEnProceso}</p>
-              </div>
+              <h3 className="text-gray-500 text-sm font-medium">En Proceso</h3>
+              <p className="text-3xl font-bold">{pedidosEnProceso}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-gray-500 text-sm font-medium">Completados</h3>
-              </div>
-              <div className="mt-2">
-                <p className="text-3xl font-bold">{pedidosCompletados}</p>
-              </div>
+              <h3 className="text-gray-500 text-sm font-medium">Completados</h3>
+              <p className="text-3xl font-bold">{pedidosCompletados}</p>
             </div>
           </div>
         </div>
@@ -298,8 +255,8 @@ export default function PedidosPage() {
             events={pedidos}
             views={{ customWeek: CustomWeekView }}
             view="customWeek"
-            date={currentDate}
-            onNavigate={handleNavigate}
+            date={currentDate} // Asegúrate de pasar la fecha actual
+            onNavigate={handleNavigate} // Maneja la navegación
             toolbar={false}
             eventPropGetter={() => ({ style: { display: 'none' } })}
           />
@@ -362,12 +319,7 @@ export default function PedidosPage() {
                           className="text-blue-600 hover:text-blue-900 mr-3"
                           aria-label="Editar pedido"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                           </svg>
                         </button>
@@ -376,17 +328,8 @@ export default function PedidosPage() {
                           className="text-red-600 hover:text-red-900"
                           aria-label="Eliminar pedido"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                              clipRule="evenodd"
-                            />
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
                           </svg>
                         </button>
                       </td>
@@ -468,16 +411,10 @@ export default function PedidosPage() {
               </div>
             </div>
             <div className="flex justify-end space-x-3 mt-6">
-              <button
-                onClick={() => setShowEditModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              >
+              <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                 Cancelar
               </button>
-              <button
-                onClick={handleSaveEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-              >
+              <button onClick={handleSaveEdit} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                 Guardar
               </button>
             </div>
@@ -493,16 +430,10 @@ export default function PedidosPage() {
               <span className="font-semibold">{currentPedido?.cliente}</span>? Esta acción no se puede deshacer.
             </p>
             <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-              >
+              <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
                 Cancelar
               </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
-              >
+              <button onClick={handleConfirmDelete} className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
                 Eliminar
               </button>
             </div>
