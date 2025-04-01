@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Calendar, momentLocalizer } from 'react-big-calendar';
+import { Calendar, momentLocalizer, Navigate } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = momentLocalizer(moment);
 
-function CustomWeekView({ date, events, localizer, onNavigate }) {
+function CustomWeekView({ date, localizer, events, onNavigate }) {
   const startOfWeek = moment(date).startOf('week');
   const days = [];
   for (let i = 0; i < 7; i++) {
@@ -21,27 +21,81 @@ function CustomWeekView({ date, events, localizer, onNavigate }) {
     return acc;
   }, {});
 
+  const handlePrevWeek = () => {
+    const prevWeek = moment(date).subtract(1, 'week').toDate();
+    onNavigate(Navigate.PREVIOUS, prevWeek);
+  };
+
+  const handleNextWeek = () => {
+    const nextWeek = moment(date).add(1, 'week').toDate();
+    onNavigate(Navigate.NEXT, nextWeek);
+  };
+
   return (
     <div className="custom-week-view p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-3xl font-semibold text-gray-800">Calendario Pedidos</h3>
+        <div className="flex space-x-2">
+          <button
+            onClick={handlePrevWeek}
+            className="p-2 rounded-full hover:bg-gray-200"
+            aria-label="Previous week"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+          <button
+            onClick={handleNextWeek}
+            className="p-2 rounded-full hover:bg-gray-200"
+            aria-label="Next week"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 text-gray-600"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
       <div className="grid grid-cols-7 gap-2">
         {days.map((day) => {
           const label = localizer.format(day, 'ddd');
           const dateNumber = day.getDate();
           const count = ordersCountByDay[day.toLocaleDateString()] || 0;
+          const isToday = moment(day).isSame(new Date(), 'day');
           return (
             <div
               key={day.toISOString()}
-              className="border rounded-lg p-4 flex flex-col items-center cursor-pointer hover:bg-gray-100"
+              className={`border border-gray-200 rounded-lg p-4 flex flex-col items-center cursor-pointer hover:bg-gray-100 ${
+                isToday ? 'bg-gray-100' : ''
+              }`}
               onClick={() => onNavigate(day)}
             >
-              <div className="font-bold text-sm text-gray-700">{label}</div>
-              <div className="mt-1 text-md font-medium text-gray-800">{dateNumber}</div>
+              <div className="text-sm text-gray-500">{label}</div>
+              <div className="mt-1 text-lg font-medium text-gray-800">{dateNumber}</div>
               {count > 0 ? (
-                <div className="mt-1 bg-gray-200 px-2 py-0.5 rounded-full text-xs">
-                  {count} pedidos
+                <div className="mt-2 bg-gray-200 px-3 py-1 rounded-full text-xs text-gray-700">
+                  {count} orders
                 </div>
               ) : (
-                <div className="mt-1 text-gray-400 text-xs">—</div>
+                <div className="mt-2 text-gray-400 text-xs">—</div>
               )}
             </div>
           );
@@ -60,6 +114,19 @@ CustomWeekView.range = (date) => {
   return days;
 };
 
+CustomWeekView.navigate = (date, action) => {
+  switch (action) {
+    case Navigate.PREVIOUS:
+      return moment(date).subtract(1, 'week').toDate();
+    case Navigate.NEXT:
+      return moment(date).add(1, 'week').toDate();
+    case Navigate.TODAY:
+      return new Date();
+    default:
+      return date;
+  }
+};
+
 CustomWeekView.title = (date, { localizer }) => {
   const range = CustomWeekView.range(date);
   const start = range[0];
@@ -69,6 +136,7 @@ CustomWeekView.title = (date, { localizer }) => {
 
 export default function PedidosPage() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [pedidosDelDia, setPedidosDelDia] = useState([]);
   const [pedidos, setPedidos] = useState([
     { id: 1, cliente: 'Juan Pérez', producto: 'Laptop', estado: 'Enviado', fecha: '2025-03-31', dinero: 1200 },
@@ -96,13 +164,30 @@ export default function PedidosPage() {
     setFechaSeleccionada(fecha);
   };
 
-  // Resumen de pedidos
+  const handleNavigate = (action, newDate) => {
+    let updatedDate;
+    switch (action) {
+      case Navigate.PREVIOUS:
+        updatedDate = moment(currentDate).subtract(1, 'week').toDate();
+        break;
+      case Navigate.NEXT:
+        updatedDate = moment(currentDate).add(1, 'week').toDate();
+        break;
+      case Navigate.TODAY:
+        updatedDate = new Date();
+        break;
+      default:
+        updatedDate = newDate || currentDate;
+    }
+    setCurrentDate(updatedDate);
+    obtenerPedidosDelDia(updatedDate);
+  };
+
   const totalPedidos = pedidos.length;
   const pedidosPendientes = pedidos.filter(pedido => pedido.estado === 'Pendiente').length;
   const pedidosEnProceso = pedidos.filter(pedido => pedido.estado === 'Enviado').length;
   const pedidosCompletados = pedidos.filter(pedido => pedido.estado === 'Entregado').length;
 
-  // Cerrar modal al hacer clic fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -117,7 +202,6 @@ export default function PedidosPage() {
     };
   }, []);
 
-  // Manejar cambios en el formulario
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -126,7 +210,6 @@ export default function PedidosPage() {
     });
   };
 
-  // Abrir modal de edición
   const handleEditClick = (pedido) => {
     setCurrentPedido(pedido);
     setFormData({
@@ -139,13 +222,11 @@ export default function PedidosPage() {
     setShowEditModal(true);
   };
 
-  // Abrir modal de eliminación
   const handleDeleteClick = (pedido) => {
     setCurrentPedido(pedido);
     setShowDeleteModal(true);
   };
 
-  // Guardar pedido editado
   const handleSaveEdit = () => {
     const updatedPedidos = pedidos.map(p => 
       p.id === currentPedido.id ? { ...p, ...formData, dinero: parseFloat(formData.dinero) } : p
@@ -153,19 +234,17 @@ export default function PedidosPage() {
     setPedidos(updatedPedidos);
     setShowEditModal(false);
     showNotification('Pedido actualizado correctamente', 'success');
-    obtenerPedidosDelDia(fechaSeleccionada); // Actualizar pedidos del día
+    obtenerPedidosDelDia(fechaSeleccionada);
   };
 
-  // Eliminar pedido
   const handleConfirmDelete = () => {
     const updatedPedidos = pedidos.filter(p => p.id !== currentPedido.id);
     setPedidos(updatedPedidos);
     setShowDeleteModal(false);
     showNotification('Pedido eliminado correctamente', 'success');
-    obtenerPedidosDelDia(fechaSeleccionada); // Actualizar pedidos del día
+    obtenerPedidosDelDia(fechaSeleccionada);
   };
 
-  // Mostrar notificación
   const showNotification = (message, type) => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
@@ -176,11 +255,8 @@ export default function PedidosPage() {
   return (
     <div className="min-h-screen bg-white text-black p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Gestión de Pedidos con fondo y sombra */}
         <div className="p-8 rounded-xl shadow-lg mb-6 bg-white">
           <h2 className="text-4xl font-semibold text-gray-700 mb-4 text-left">Gestión de Pedidos</h2>
-
-          {/* Resumen de pedidos */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
@@ -190,7 +266,6 @@ export default function PedidosPage() {
                 <p className="text-3xl font-bold">{totalPedidos}</p>
               </div>
             </div>
-
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-gray-500 text-sm font-medium">Pendientes</h3>
@@ -199,7 +274,6 @@ export default function PedidosPage() {
                 <p className="text-3xl font-bold">{pedidosPendientes}</p>
               </div>
             </div>
-
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-gray-500 text-sm font-medium">En Proceso</h3>
@@ -208,7 +282,6 @@ export default function PedidosPage() {
                 <p className="text-3xl font-bold">{pedidosEnProceso}</p>
               </div>
             </div>
-
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-gray-500 text-sm font-medium">Completados</h3>
@@ -219,23 +292,19 @@ export default function PedidosPage() {
             </div>
           </div>
         </div>
-
-        {/* Calendario de Pedidos con fondo y sombra */}
         <div className="p-8 rounded-xl shadow-lg mb-6 bg-white">
-          <h2 className="text-4xl font-semibold text-gray-700 mb-4 text-left">Calendario de Pedidos</h2>
           <Calendar
             localizer={localizer}
             events={pedidos}
             views={{ customWeek: CustomWeekView }}
             view="customWeek"
+            date={currentDate}
+            onNavigate={handleNavigate}
             toolbar={false}
             eventPropGetter={() => ({ style: { display: 'none' } })}
-            onNavigate={(newDate) => obtenerPedidosDelDia(newDate)}
           />
         </div>
       </div>
-
-      {/* HISTORIAL DE PEDIDOS con fondo y sombra */}
       <div className="mt-8">
         <div className="p-8 rounded-xl shadow-lg mb-6 bg-white">
           <h2 className="text-3xl font-semibold text-gray-700 mb-4 text-left">Historial de Pedidos</h2>
@@ -335,8 +404,6 @@ export default function PedidosPage() {
           </div>
         </div>
       </div>
-
-      {/* Modal de Edición */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -417,8 +484,6 @@ export default function PedidosPage() {
           </div>
         </div>
       )}
-
-      {/* Modal de Eliminación */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -444,8 +509,6 @@ export default function PedidosPage() {
           </div>
         </div>
       )}
-
-      {/* Notificación */}
       {notification.show && (
         <div
           className={`fixed bottom-4 right-4 px-6 py-3 rounded-md shadow-md ${
