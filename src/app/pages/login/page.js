@@ -86,7 +86,7 @@ export default function LoginPage() {
                   className="h-4 w-4 text-gray-600 focus:ring-0 border-gray-300 rounded"
                 />
                 <label htmlFor="remember" className="ml-2 text-sm text-gray-500">
-                  Recuerda
+                  Recuerdame
                 </label>
               </div>
               <a href="#" className="text-sm text-gray-500 hover:underline">
