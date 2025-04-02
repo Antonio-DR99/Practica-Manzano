@@ -1,11 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function LoginPage() {
   // State to manage username, password, and error message
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  // Set the body background to white on component mount
+  useEffect(() => {
+    document.body.style.backgroundColor = 'white';
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
 
   // Function to handle form submission
   const handleSubmit = (e) => {
@@ -52,7 +61,7 @@ export default function LoginPage() {
             {/* Password Field */}
             <div className="relative">
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                contraseña
+                Contraseña
               </label>
               <div className="flex items-center border border-gray-300 rounded-md bg-gray-100">
                 <span className="pl-3 text-gray-500"></span>
@@ -77,7 +86,7 @@ export default function LoginPage() {
                   className="h-4 w-4 text-gray-600 focus:ring-0 border-gray-300 rounded"
                 />
                 <label htmlFor="remember" className="ml-2 text-sm text-gray-500">
-                  Acuerdate de mi 
+                  Acuérdate de mí
                 </label>
               </div>
               <a href="#" className="text-sm text-gray-500 hover:underline">
@@ -100,7 +109,7 @@ export default function LoginPage() {
             <p className="text-center text-sm text-gray-500 mt-4">
               ¿No tienes cuenta?{' '}
               <a href="#" className="text-gray-500 hover:underline">
-                Iniciar Sesión
+                Regístrate
               </a>
             </p>
           </form>
