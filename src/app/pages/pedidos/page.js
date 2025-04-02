@@ -130,6 +130,15 @@ export default function PedidosPage() {
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const modalRef = useRef(null);
 
+  // Set the body background to white on component mount
+  useEffect(() => {
+    document.body.style.backgroundColor = 'white';
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
+
   useEffect(() => {
     const now = new Date();
     setFechaSeleccionada(now);
@@ -146,7 +155,7 @@ export default function PedidosPage() {
     setFechaSeleccionada(fechaValida);
   };
 
-    const handleNavigate = (newDate) => {
+  const handleNavigate = (newDate) => {
     console.log('handleNavigate llamado con newDate:', newDate);
     setCurrentDate(newDate); // Actualiza el estado de la fecha actual
     obtenerPedidosDelDia(newDate); // Actualiza los pedidos del día
@@ -231,19 +240,19 @@ export default function PedidosPage() {
         <div className="p-8 rounded-xl shadow-lg mb-6 bg-white">
           <h2 className="text-4xl font-semibold text-gray-700 mb-4 text-left">Gestión de Pedidos</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h3 className="text-gray-500 text-sm font-medium">Total Pedidos</h3>
               <p className="text-3xl font-bold">{totalPedidos}</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h3 className="text-gray-500 text-sm font-medium">Pendientes</h3>
               <p className="text-3xl font-bold">{pedidosPendientes}</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h3 className="text-gray-500 text-sm font-medium">En Proceso</h3>
               <p className="text-3xl font-bold">{pedidosEnProceso}</p>
             </div>
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h3 className="text-gray-500 text-sm font-medium">Completados</h3>
               <p className="text-3xl font-bold">{pedidosCompletados}</p>
             </div>
@@ -267,7 +276,7 @@ export default function PedidosPage() {
           <h2 className="text-3xl font-semibold text-gray-700 mb-4 text-left">Historial de Pedidos</h2>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-white">
                 <tr>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
