@@ -46,7 +46,7 @@ const App = () => {
     <div className="flex h-screen">
       {/* Sidebar */}
       <aside className="w-64 bg-gray-900 text-white p-6">
-        <h2 className="text-2xl font-bold">Óptica Panel</h2>
+        <h2 className="text-2xl font-bold text-center">Productos</h2>
       </aside>
 
       {/* Main */}
