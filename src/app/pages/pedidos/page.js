@@ -5,29 +5,57 @@ import { useState, useEffect, useRef } from 'react';
 export default function PedidosPage() {
   const [fechaSeleccionada, setFechaSeleccionada] = useState(null);
   const [pedidosDelDia, setPedidosDelDia] = useState([]);
-  const [pedidos, setPedidos] = useState([
-    { id: 1, cliente: 'Juan Pérez', producto: 'Laptop', estado: 'Enviado', fecha: '2025-03-31', dinero: 1200 },
-    { id: 2, cliente: 'Ana Gómez', producto: 'Teléfono', estado: 'Pendiente', fecha: '2025-04-02', dinero: 800 },
-    { id: 3, cliente: 'Carlos Ruiz', producto: 'Auriculares', estado: 'Entregado', fecha: '2025-04-03', dinero: 150 },
-  ]);
+  const [pedidos, setPedidos] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [currentPedido, setCurrentPedido] = useState(null);
-  const [formData, setFormData] = useState({ cliente: '', producto: '', estado: 'Pendiente', fecha: '', dinero: '' });
+  const [formData, setFormData] = useState({ cliente: '', producto: '', estado: 'Pendiente', fecha: '', dinero: '', phone: '', message: '' });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
   const modalRef = useRef(null);
 
+  // Obtener pedidos desde la API
   useEffect(() => {
-    document.body.style.backgroundColor = 'white';
-    return () => { document.body.style.backgroundColor = ''; };
+    const fetchOrders = async () => {
+      try {
+        const response = await fetch('/api/orders');
+        const data = await response.json();
+        // Mapear datos de WhatsApp a la estructura de la página
+        const mappedOrders = data.map((order) => ({
+          id: order.idorder,
+          cliente: order.user_name,
+          producto: order.product_name,
+          estado: 'Pendiente', // Valor por defecto
+          fecha: order.orderdate,
+          dinero: order.amount * order.price,
+          phone: order.phone,
+          message: order.message || '',
+        }));
+        setPedidos(mappedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        showNotification('Error al cargar los pedidos', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+    // Actualizar cada minuto
+    const interval = setInterval(fetchOrders, 60000);
+    return () => clearInterval(interval);
   }, []);
 
+  // Configurar fondo y fecha inicial
   useEffect(() => {
+    document.body.style.backgroundColor = 'white';
     const hoy = new Date();
     setFechaSeleccionada(hoy);
     obtenerPedidosDelDia(hoy);
-  }, []);
+    return () => { document.body.style.backgroundColor = ''; };
+  }, [pedidos]);
 
+  // Filtrar pedidos por fecha
   const obtenerPedidosDelDia = (fecha) => {
     const pedidosFiltrados = pedidos.filter(
       (p) => new Date(p.fecha).toLocaleDateString() === fecha.toLocaleDateString()
@@ -36,12 +64,14 @@ export default function PedidosPage() {
     setFechaSeleccionada(fecha);
   };
 
+  // Estadísticas
   const totalPedidos = pedidos.length;
   const pedidosPendientes = pedidos.filter((p) => p.estado === 'Pendiente').length;
   const pedidosEnProceso = pedidos.filter((p) => p.estado === 'Enviado').length;
   const pedidosCompletados = pedidos.filter((p) => p.estado === 'Entregado').length;
   const totalDinero = pedidos.reduce((sum, p) => sum + p.dinero, 0);
 
+  // Manejar clics fuera del modal
   useEffect(() => {
     function handleClickOutside(event) {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -94,7 +124,9 @@ export default function PedidosPage() {
     setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   };
 
-  if (fechaSeleccionada === null) return <div>Cargando...</div>;
+  if (loading || fechaSeleccionada === null) {
+    return <div className="min-h-screen flex items-center justify-center text-gray-500">Cargando pedidos...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-white text-black p-6">
@@ -121,7 +153,7 @@ export default function PedidosPage() {
             </div>
             <div className="bg-white p-4 rounded-lg border border-gray-200">
               <h3 className="text-gray-500 text-sm font-medium">Total Dinero</h3>
-              <p className="text-3xl font-bold">€{totalDinero}</p>
+              <p className="text-3xl font-bold">€{totalDinero.toFixed(2)}</p>
             </div>
           </div>
         </div>
@@ -138,6 +170,8 @@ export default function PedidosPage() {
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dinero</th>
+                  <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teléfono</th>
+                  <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mensaje</th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
               </thead>
@@ -160,8 +194,10 @@ export default function PedidosPage() {
                           pedido.estado === 'Enviado' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
                         }`}>{pedido.estado}</span>
                       </td>
-                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">{new Date(pedido.fecha).toLocaleDateString('es-ES',{ year:'numeric',month:'long',day:'numeric'})}</td>
-                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">€{pedido.dinero}</td>
+                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">{new Date(pedido.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">€{pedido.dinero.toFixed(2)}</td>
+                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">{pedido.phone}</td>
+                      <td className="py-4 px-4 whitespace-nowrap text-sm text-gray-500">{pedido.message || '-'}</td>
                       <td className="py-4 px-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => handleEditClick(pedido)}
@@ -185,14 +221,14 @@ export default function PedidosPage() {
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="6" className="py-4 px-4 text-center text-gray-500">No se encontraron pedidos</td></tr>
+                  <tr><td colSpan="8" className="py-4 px-4 text-center text-gray-500">No se encontraron pedidos</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Modales */}
+        {/* Modal de Edición */}
         {showEditModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
@@ -204,12 +240,18 @@ export default function PedidosPage() {
                 <input name="producto" value={formData.producto} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
                 <label className="block text-sm font-medium text-gray-700">Estado</label>
                 <select name="estado" value={formData.estado} onChange={handleInputChange} className="w-full p-2 border rounded-md">
-                  <option value="Pendiente">Pendiente</option><option value="Enviado">Enviado</option><option value="Entregado">Entregado</option>
+                  <option value="Pendiente">Pendiente</option>
+                  <option value="Enviado">Enviado</option>
+                  <option value="Entregado">Entregado</option>
                 </select>
                 <label className="block text-sm font-medium text-gray-700">Fecha</label>
                 <input type="date" name="fecha" value={formData.fecha} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
-                <label className="block text-sm font-medium text-gray-700">Dinero (€)</label>
+                <label className="block text-sm font-medium text-gray-75">Dinero (€)</label>
                 <input type="number" name="dinero" value={formData.dinero} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
+                <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+                <input name="phone" value={formData.phone} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
+                <label className="block text-sm font-medium text-gray-700">Mensaje</label>
+                <textarea name="message" value={formData.message} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <button onClick={() => setShowEditModal(false)} className="px-4 py-2 bg-gray-200 rounded-md">Cancelar</button>
@@ -218,6 +260,8 @@ export default function PedidosPage() {
             </div>
           </div>
         )}
+
+        {/* Modal de Eliminación */}
         {showDeleteModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div ref={modalRef} className="bg-white rounded-lg p-6 w-full max-w-md">
