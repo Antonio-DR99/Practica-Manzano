@@ -12,6 +12,8 @@ export default function PedidosPage() {
   const [currentPedido, setCurrentPedido] = useState(null);
   const [formData, setFormData] = useState({ cliente: '', producto: '', estado: 'Pendiente', fecha: '', dinero: '', phone: '', message: '' });
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [searchPhone, setSearchPhone] = useState('');
+  const [searchDate, setSearchDate] = useState('');
   const modalRef = useRef(null);
 
   // Obtener pedidos desde la API
@@ -20,12 +22,11 @@ export default function PedidosPage() {
       try {
         const response = await fetch('/api/orders');
         const data = await response.json();
-        // Mapear datos de WhatsApp a la estructura de la página
         const mappedOrders = data.map((order) => ({
           id: order.idorder,
           cliente: order.user_name,
           producto: order.product_name,
-          estado: 'Pendiente', // Valor por defecto
+          estado: 'Pendiente',
           fecha: order.orderdate,
           dinero: order.amount * order.price,
           phone: order.phone,
@@ -41,7 +42,6 @@ export default function PedidosPage() {
     };
 
     fetchOrders();
-    // Actualizar cada minuto
     const interval = setInterval(fetchOrders, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -55,7 +55,7 @@ export default function PedidosPage() {
     return () => { document.body.style.backgroundColor = ''; };
   }, [pedidos]);
 
-  // Filtrar pedidos por fecha
+  // Filtrar pedidos por fecha para la vista diaria
   const obtenerPedidosDelDia = (fecha) => {
     const pedidosFiltrados = pedidos.filter(
       (p) => new Date(p.fecha).toLocaleDateString() === fecha.toLocaleDateString()
@@ -64,12 +64,23 @@ export default function PedidosPage() {
     setFechaSeleccionada(fecha);
   };
 
+  // Filtrar pedidos por teléfono y fecha
+  const filteredPedidos = pedidos.filter((pedido) => {
+    const matchesPhone = searchPhone
+      ? pedido.phone.toLowerCase().includes(searchPhone.toLowerCase())
+      : true;
+    const matchesDate = searchDate
+      ? new Date(pedido.fecha).toLocaleDateString() === new Date(searchDate).toLocaleDateString()
+      : true;
+    return matchesPhone && matchesDate;
+  });
+
   // Estadísticas
-  const totalPedidos = pedidos.length;
-  const pedidosPendientes = pedidos.filter((p) => p.estado === 'Pendiente').length;
-  const pedidosEnProceso = pedidos.filter((p) => p.estado === 'Enviado').length;
-  const pedidosCompletados = pedidos.filter((p) => p.estado === 'Entregado').length;
-  const totalDinero = pedidos.reduce((sum, p) => sum + p.dinero, 0);
+  const totalPedidos = filteredPedidos.length;
+  const pedidosPendientes = filteredPedidos.filter((p) => p.estado === 'Pendiente').length;
+  const pedidosEnProceso = filteredPedidos.filter((p) => p.estado === 'Enviado').length;
+  const pedidosCompletados = filteredPedidos.filter((p) => p.estado === 'Entregado').length;
+  const totalDinero = filteredPedidos.reduce((sum, p) => sum + p.dinero, 0);
 
   // Manejar clics fuera del modal
   useEffect(() => {
@@ -124,6 +135,11 @@ export default function PedidosPage() {
     setTimeout(() => setNotification({ show: false, message: '', type: '' }), 3000);
   };
 
+  const handleClearFilters = () => {
+    setSearchPhone('');
+    setSearchDate('');
+  };
+
   if (loading || fechaSeleccionada === null) {
     return <div className="min-h-screen flex items-center justify-center text-gray-500">Cargando pedidos...</div>;
   }
@@ -161,6 +177,36 @@ export default function PedidosPage() {
         {/* Historial de Pedidos */}
         <div className="p-8 rounded-xl shadow-lg mb-6 bg-white">
           <h2 className="text-3xl font-semibold text-gray-700 mb-4 text-left">Historial de Pedidos</h2>
+          {/* Barra de búsqueda */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por teléfono</label>
+              <input
+                type="text"
+                value={searchPhone}
+                onChange={(e) => setSearchPhone(e.target.value)}
+                placeholder="Ej. +123456789"
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Buscar por fecha</label>
+              <input
+                type="date"
+                value={searchDate}
+                onChange={(e) => setSearchDate(e.target.value)}
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={handleClearFilters}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white border border-gray-200">
               <thead className="bg-white">
@@ -176,8 +222,8 @@ export default function PedidosPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {pedidos.length > 0 ? (
-                  pedidos.map((pedido) => (
+                {filteredPedidos.length > 0 ? (
+                  filteredPedidos.map((pedido) => (
                     <tr key={pedido.id} className="hover:bg-gray-50">
                       <td className="py-4 px-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -246,7 +292,7 @@ export default function PedidosPage() {
                 </select>
                 <label className="block text-sm font-medium text-gray-700">Fecha</label>
                 <input type="date" name="fecha" value={formData.fecha} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
-                <label className="block text-sm font-medium text-gray-75">Dinero (€)</label>
+                <label className="block text-sm font-medium text-gray-700">Dinero (€)</label>
                 <input type="number" name="dinero" value={formData.dinero} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
                 <label className="block text-sm font-medium text-gray-700">Teléfono</label>
                 <input name="phone" value={formData.phone} onChange={handleInputChange} className="w-full p-2 border rounded-md" />
