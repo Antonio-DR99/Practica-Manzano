@@ -1,10 +1,46 @@
-// Página de productos para una óptica usando React + TailwindCSS
-// Solo para uso interno de empleados (admin)
 'use client';
 import { useState } from "react";
 
 const App = () => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState([
+    {
+      id: 1,
+      name: "Lentillas diarias para 1 mes",
+      image: "https://via.placeholder.com/150",
+      description: "2 cajas de 30 und/caja"
+    },
+    {
+      id: 2,
+      name: "Lentillas diarias para 3 meses",
+      image: "https://via.placeholder.com/150",
+      description: "2 cajas de 90 und/caja"
+    },
+    {
+      id: 3,
+      name: "Lentillas quincenales para 3 meses",
+      image: "https://via.placeholder.com/150",
+      description: "2 cajas de 6 und/caja + 1 líquido incluido"
+    },
+    {
+      id: 4,
+      name: "Lentillas quincenales para 6 meses",
+      image: "https://via.placeholder.com/150",
+      description: "2 cajas de 12 und/caja + líquidos incluidos"
+    },
+    {
+      id: 5,
+      name: "Lentillas mensuales para 3 meses",
+      image: "https://via.placeholder.com/150",
+      description: "2 cajas de 3 und/caja + líquido incluido"
+    },
+    {
+      id: 6,
+      name: "Lentillas mensuales para 6 meses",
+      image: "https://via.placeholder.com/150",
+      description: "2 cajas de 6 und/caja + líquidos incluidos"
+    }
+  ]);
+
   const [showModal, setShowModal] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -31,7 +67,7 @@ const App = () => {
 
   const handleAddProduct = (e) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price || !newProduct.image) return;
+    if (!newProduct.name || !newProduct.image) return;
     setProducts([...products, { ...newProduct, id: Date.now() }]);
     setNewProduct({ name: "", price: "", image: "" });
     setImagePreview(null);
@@ -76,7 +112,7 @@ const App = () => {
               <div className="p-4 flex-1 flex flex-col justify-between">
                 <div>
                   <h3 className="text-lg font-semibold">{product.name}</h3>
-                  <p className="text-gray-900 font-bold mt-2">${product.price}</p>
+                  {product.description && <p className="text-gray-600 text-sm mt-1">{product.description}</p>}
                 </div>
                 <button
                   onClick={() => handleDelete(product.id)}
@@ -99,15 +135,6 @@ const App = () => {
                   name="name"
                   placeholder="Nombre"
                   value={newProduct.name}
-                  onChange={handleChange}
-                  className="border border-gray-300 rounded px-3 py-2 text-black"
-                />
-              
-                <input
-                  name="price"
-                  placeholder="Precio"
-                  type="number"
-                  value={newProduct.price}
                   onChange={handleChange}
                   className="border border-gray-300 rounded px-3 py-2 text-black"
                 />
