@@ -42,8 +42,10 @@ const App = () => {
 
   const handleAddProduct = () => {
     if (!newProductName.trim() || !newProductDescription.trim()) return;
+    // Busca el id más alto actual
+    const maxId = products.length > 0 ? Math.max(...products.map(p => p.id)) : 0;
     const newProduct = {
-      id: Date.now(),
+      id: maxId + 1,
       name: newProductName,
       description: newProductDescription,
       selected: false,
