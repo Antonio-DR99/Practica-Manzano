@@ -9,6 +9,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+console.log('TWILIO_ACCOUNT_SID:', JSON.stringify(process.env.TWILIO_ACCOUNT_SID));
+console.log('TWILIO_AUTH_TOKEN:', process.env.TWILIO_AUTH_TOKEN ? '***loaded***' : 'undefined');
+console.log('TWILIO_PHONE_NUMBER:', JSON.stringify(process.env.TWILIO_PHONE_NUMBER));
+
 const app = express();
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken  = process.env.TWILIO_AUTH_TOKEN;
@@ -116,6 +120,7 @@ async function parseOrderMessage(msg) {
 
 // Webhook
 app.post('/api/webhook', async (req, res) => {
+  try {
   const message = (req.body.Body||'').trim();
   const fromRaw = req.body.From || '';
   const from    = fromRaw.replace('whatsapp:', '');
@@ -255,6 +260,11 @@ app.post('/api/webhook', async (req, res) => {
   // Fallback
   sessions.delete(from);
   res.sendStatus(200);
+} catch (err) {
+    console.error('Error in /api/webhook handler:', err);
+  } 
+    // Always respond to Twilio
+    res.sendStatus(200);
 });
 
 // Otros endpoints REST (orders, products, users)
