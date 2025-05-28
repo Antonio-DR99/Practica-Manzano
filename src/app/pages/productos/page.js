@@ -3,12 +3,54 @@ import { useState, useEffect } from "react";
 
 const App = () => {
   const defaultProducts = [
-    { id: 1, name: "Lentillas diarias para 1 mes", description: "(2 cajas de 30 und/caja)", selected: false, isNew: false },
-    { id: 2, name: "Lentillas diarias para 3 meses", description: "(2 cajas de 90 und/caja)", selected: false, isNew: false },
-    { id: 3, name: "Lentillas quincenales para 3 meses", description: "(2 cajas de 6 und/caja + 1 líquido incluido)", selected: false, isNew: false },
-    { id: 4, name: "Lentillas quincenales para 6 meses", description: "(2 cajas de 12 und/caja + líquidos incluidos)", selected: false, isNew: false },
-    { id: 5, name: "Lentillas mensuales para 3 meses", description: "(2 cajas de 3 und/caja + líquido incluido)", selected: false, isNew: false },
-    { id: 6, name: "Lentillas mensuales para 6 meses", description: "(2 cajas de 6 und/caja + líquidos incluidos)", selected: false, isNew: false },
+    { 
+      id: 1, 
+      name: "Lentillas diarias para 1 mes", 
+      description: "(2 cajas de 30 und/caja)", 
+      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Diarias+1M",
+      selected: false, 
+      isNew: false 
+    },
+    { 
+      id: 2, 
+      name: "Lentillas diarias para 3 meses", 
+      description: "(2 cajas de 90 und/caja)", 
+      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Diarias+3M",
+      selected: false, 
+      isNew: false 
+    },
+    { 
+      id: 3, 
+      name: "Lentillas quincenales para 3 meses", 
+      description: "(2 cajas de 6 und/caja + 1 líquido incluido)", 
+      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Quincenales+3M",
+      selected: false, 
+      isNew: false 
+    },
+    { 
+      id: 4, 
+      name: "Lentillas quincenales para 6 meses", 
+      description: "(2 cajas de 12 und/caja + líquidos incluidos)", 
+      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Quincenales+6M",
+      selected: false, 
+      isNew: false 
+    },
+    { 
+      id: 5, 
+      name: "Lentillas mensuales para 3 meses", 
+      description: "(2 cajas de 3 und/caja + líquido incluido)", 
+      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Mensuales+3M",
+      selected: false, 
+      isNew: false 
+    },
+    { 
+      id: 6, 
+      name: "Lentillas mensuales para 6 meses", 
+      description: "(2 cajas de 6 und/caja + líquidos incluidos)", 
+      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Mensuales+6M",
+      selected: false, 
+      isNew: false 
+    },
   ];
 
   const [isClient, setIsClient] = useState(false);
@@ -19,6 +61,8 @@ const App = () => {
   const [newProductDescription, setNewProductDescription] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [productsPerPage] = useState(8); // Número de productos por página
 
   useEffect(() => {
     setIsClient(true); //  bloquea SSR
@@ -72,6 +116,15 @@ const App = () => {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Añadido para la paginación
+  const indexOfLastProduct = currentPage * productsPerPage;
+  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
+  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+
+  // Función para cambiar de página
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
     <div className="flex h-screen">
       <main className="flex-1 bg-gray-100 p-8 overflow-auto w-full">
@@ -114,18 +167,28 @@ const App = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProducts.map((product) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          {currentProducts.map((product) => (
             <div
               key={product.id}
               className={`bg-white rounded-xl shadow-md flex flex-col border ${product.isNew ? "border-blue-500" : "border-transparent"}`}
             >
-              <div className="p-4 flex-1 flex flex-col justify-between relative">
+              {/* Contenedor de imagen */}
+              <div className="relative w-full h-48 rounded-t-xl overflow-hidden">
+                <img
+                  src={product.image || "https://placehold.co/300x200/eee/31304D/png?text=Producto"}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
                 {product.isNew && (
                   <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
                     Nuevo
                   </span>
                 )}
+              </div>
+
+              {/* Contenido del producto */}
+              <div className="p-4 flex-1 flex flex-col justify-between">
                 {editingProduct?.id === product.id ? (
                   <>
                     <input
@@ -146,18 +209,90 @@ const App = () => {
                       <h3 className="text-lg font-semibold text-black">{product.name}</h3>
                       <p className="text-black mt-1">{product.description}</p>
                     </div>
-                    <div className="flex flex-col gap-2 mt-4">
-                      <button onClick={() => toggleSelect(product.id)} className={`px-3 py-1 rounded ${product.selected ? "bg-green-600 text-white" : "bg-gray-300 text-black hover:bg-gray-400"}`}>
-                        {product.selected ? "Seleccionado" : "Seleccionar"}
+                    <div className="flex flex-row gap-2 mt-4 justify-end">
+                      <button 
+                        onClick={() => startEdit(product)} 
+                        className="p-2 hover:bg-blue-100 rounded-full transition-colors cursor-pointer" // Añadido cursor-pointer
+                        aria-label="Editar producto"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-5 w-5 text-gray-900" 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
                       </button>
-                      <button onClick={() => startEdit(product)} className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Editar</button>
-                      <button onClick={() => handleDelete(product.id)} className="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800">Eliminar</button>
+                      <button 
+                        onClick={() => handleDelete(product.id)} 
+                        className="p-2 hover:bg-red-100 rounded-full transition-colors cursor-pointer" // Añadido cursor-pointer
+                        aria-label="Eliminar producto"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          className="h-5 w-5 text-gray-900" 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </button>
                     </div>
                   </>
                 )}
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Paginación */}
+        <div className="mt-8 flex flex-col items-center justify-center">
+          <span className="text-gray-700 mb-2">
+            Página {currentPage} de {totalPages}
+          </span>
+          <div className="flex items-center gap-2">
+            {/* Botón Anterior */}
+            <button
+              onClick={() => paginate(currentPage > 1 ? currentPage - 1 : 1)}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                currentPage === 1
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              &larr;
+            </button>
+
+            {/* Números de página */}
+            {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                key={i + 1}
+                onClick={() => paginate(i + 1)}
+                className={`px-3 py-1 rounded-md font-semibold transition-all flex items-center justify-center ${
+                  currentPage === i + 1
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            {/* Botón Siguiente */}
+            <button
+              onClick={() => paginate(currentPage < totalPages ? currentPage + 1 : totalPages)}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                currentPage === totalPages
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              &rarr;
+            </button>
+          </div>
         </div>
       </main>
     </div>
