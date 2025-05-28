@@ -7,7 +7,8 @@ const App = () => {
       id: 1, 
       name: "Lentillas diarias para 1 mes", 
       description: "(2 cajas de 30 und/caja)", 
-      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Diarias+1M",
+      image: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg>`)}`,
+      stock: 15,
       selected: false, 
       isNew: false 
     },
@@ -15,7 +16,8 @@ const App = () => {
       id: 2, 
       name: "Lentillas diarias para 3 meses", 
       description: "(2 cajas de 90 und/caja)", 
-      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Diarias+3M",
+      image: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg>`)}`,
+      stock: 8,
       selected: false, 
       isNew: false 
     },
@@ -23,7 +25,8 @@ const App = () => {
       id: 3, 
       name: "Lentillas quincenales para 3 meses", 
       description: "(2 cajas de 6 und/caja + 1 líquido incluido)", 
-      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Quincenales+3M",
+      image: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg>`)}`,
+      stock: 12,
       selected: false, 
       isNew: false 
     },
@@ -31,7 +34,8 @@ const App = () => {
       id: 4, 
       name: "Lentillas quincenales para 6 meses", 
       description: "(2 cajas de 12 und/caja + líquidos incluidos)", 
-      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Quincenales+6M",
+      image: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg>`)}`,
+      stock: 5,
       selected: false, 
       isNew: false 
     },
@@ -39,7 +43,8 @@ const App = () => {
       id: 5, 
       name: "Lentillas mensuales para 3 meses", 
       description: "(2 cajas de 3 und/caja + líquido incluido)", 
-      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Mensuales+3M",
+      image: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg>`)}`,
+      stock: 3,
       selected: false, 
       isNew: false 
     },
@@ -47,7 +52,8 @@ const App = () => {
       id: 6, 
       name: "Lentillas mensuales para 6 meses", 
       description: "(2 cajas de 6 und/caja + líquidos incluidos)", 
-      image: "https://placehold.co/300x200/eee/31304D/png?text=Lentillas+Mensuales+6M",
+      image: `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg>`)}`,
+      stock: 10,
       selected: false, 
       isNew: false 
     },
@@ -176,9 +182,17 @@ const App = () => {
               {/* Contenedor de imagen */}
               <div className="relative w-full h-48 rounded-t-xl overflow-hidden">
                 <img
-                  src={product.image || "https://placehold.co/300x200/eee/31304D/png?text=Producto"}
+                  src={product.image || `data:image/svg+xml,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#31304D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="6" cy="15" r="4"/>
+      <circle cx="18" cy="15" r="4"/>
+      <path d="M14 15a2 2 0 0 0-2-2 2 2 0 0 0-2 2"/>
+      <path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/>
+      <path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/>
+    </svg>
+  `)}`}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain p-8 bg-gray-50"
                 />
                 {product.isNew && (
                   <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
@@ -201,6 +215,14 @@ const App = () => {
                       value={editingProduct.description}
                       onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
                     />
+                    <input
+                      type="number"
+                      className="border text-black w-full rounded mb-2 px-2 py-1"
+                      value={editingProduct.stock}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, stock: parseInt(e.target.value) || 0 })}
+                      min="0"
+                      placeholder="Stock disponible"
+                    />
                     <button onClick={saveEdit} className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 mb-2">Guardar</button>
                   </>
                 ) : (
@@ -209,35 +231,40 @@ const App = () => {
                       <h3 className="text-lg font-semibold text-black">{product.name}</h3>
                       <p className="text-black mt-1">{product.description}</p>
                     </div>
-                    <div className="flex flex-row gap-2 mt-4 justify-end">
-                      <button 
-                        onClick={() => startEdit(product)} 
-                        className="p-2 hover:bg-blue-100 rounded-full transition-colors cursor-pointer" // Añadido cursor-pointer
-                        aria-label="Editar producto"
-                      >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className="h-5 w-5 text-gray-900" 
-                          viewBox="0 0 20 20" 
-                          fill="currentColor"
+                    <div className="flex justify-between items-center mt-4">
+                      <span className={`text-sm font-medium text-black`}>
+                        Stock: {product.stock} uds.
+                      </span>
+                      <div className="flex flex-row gap-2">
+                        <button 
+                          onClick={() => startEdit(product)} 
+                          className="p-2 hover:bg-blue-100 rounded-full transition-colors cursor-pointer"
+                          aria-label="Editar producto"
                         >
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(product.id)} 
-                        className="p-2 hover:bg-red-100 rounded-full transition-colors cursor-pointer" // Añadido cursor-pointer
-                        aria-label="Eliminar producto"
-                      >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className="h-5 w-5 text-gray-900" 
-                          viewBox="0 0 20 20" 
-                          fill="currentColor"
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-5 w-5 text-gray-900" 
+                            viewBox="0 0 20 20" 
+                            fill="currentColor"
+                          >
+                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                          </svg>
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(product.id)} 
+                          className="p-2 hover:bg-red-100 rounded-full transition-colors cursor-pointer"
+                          aria-label="Eliminar producto"
                         >
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className="h-5 w-5 text-gray-900" 
+                            viewBox="0 0 20 20" 
+                            fill="currentColor"
+                          >
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </>
                 )}
